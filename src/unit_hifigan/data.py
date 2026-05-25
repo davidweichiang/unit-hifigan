@@ -28,7 +28,7 @@ def load_audio(source: str | Path) -> Tensor:
 
 
 def read_manifest(path: str | Path) -> pl.DataFrame:
-    match Path(path).suffixes[0]:
+    match Path(path).suffixes[-1]:
         case ".jsonl":
             manifest = pl.read_ndjson(path)
         case ".csv":
@@ -137,6 +137,8 @@ class AudioDataLoader(StatefulDataLoader[AudioItem]):
     def f0_bins(self) -> list[int] | None:
         return self.dataset.f0_bins
 
+def return_none(*args, **kwargs):
+    return None
 
 def build_dataloader(
     manifest: str | Path,
@@ -156,7 +158,7 @@ def build_dataloader(
         if dist.is_initialized()
         else None,
         num_workers=os.process_cpu_count() or 0,
-        collate_fn=partial(collate, collate_fn_map=default_collate_fn_map | {NoneType: lambda *_, **__: None}),
+        collate_fn=partial(collate, collate_fn_map=default_collate_fn_map | {NoneType: return_none}),
         drop_last=is_train,
         generator=torch.Generator().manual_seed(seed + (dist.get_rank() if dist.is_initialized() else 0)),
         persistent_workers=is_train,
