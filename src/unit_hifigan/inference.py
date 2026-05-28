@@ -13,7 +13,7 @@ from unit_hifigan.model import SAMPLE_RATE, UnitVocoder
 
 def inference(root: str | Path, path_model: str | Path, path_manifest: str | Path) -> None:
     root = Path(root)
-    device = torch.device("cuda")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = torch.compile(UnitVocoder.from_pretrained(path_model).eval().to(device), fullgraph=True, dynamic=True)
     manifest = read_manifest(path_manifest)
     manifest = manifest.with_columns(pl.col("audio").str.strip_prefix(f"{commonpath(manifest['audio'])}{os.sep}"))
